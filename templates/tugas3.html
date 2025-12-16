@@ -1,13 +1,215 @@
 {% extends "base.html" %}
 
-{% block title %}Tugas 3 - Naive Bayes Classification{% endblock %}
+{% block title %}Tugas 3 - Decision Tree Classification{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let csvData = null;
+
+    function handleCSVUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            csvData = e.target.result;
+            const lines = csvData.split('\n').filter(line => line.trim());
+            const cols = lines[0].split(',').length;
+
+            document.getElementById('csvFileName').textContent = file.name;
+            document.getElementById('csvRows').textContent = lines.length - 1;
+            document.getElementById('csvCols').textContent = cols;
+            document.getElementById('csvInfo').style.display = 'block';
+            document.getElementById('btnProcessDT').disabled = false;
+
+            // Show preview
+            showDataPreview(csvData);
+        };
+        reader.readAsText(file);
+    }
+
+    function showDataPreview(csvData) {
+        const lines = csvData.split('\n').filter(line => line.trim()).slice(0, 6);
+        let html = '<table class="preview-table">';
+        lines.forEach((line, index) => {
+            html += '<tr>';
+            line.split(',').forEach(cell => {
+                if (index === 0) {
+                    html += `<th>${cell}</th>`;
+                } else {
+                    html += `<td>${cell}</td>`;
+                }
+            });
+            html += '</tr>';
+        });
+        html += '</table>';
+        document.getElementById('dataPreviewContent').innerHTML = html;
+        document.getElementById('dataPreview').style.display = 'block';
+    }
+
+    function processDecisionTree() {
+        if (!csvData) {
+            alert('Silakan upload file CSV terlebih dahulu!');
+            return;
+        }
+
+        const test_size = parseFloat(document.getElementById('test_size_dt').value);
+        const max_depth = document.getElementById('max_depth_dt').value;
+
+        document.getElementById('loadingDT').style.display = 'block';
+        document.getElementById('resultDT').style.display = 'none';
+
+        fetch('/predict_decision_tree', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                csv_data: csvData,
+                test_size: test_size,
+                max_depth: max_depth === 'None' ? null : max_depth
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loadingDT').style.display = 'none';
+
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+
+                displayDecisionTreeResults(data);
+                document.getElementById('resultDT').style.display = 'block';
+            })
+            .catch(error => {
+                document.getElementById('loadingDT').style.display = 'none';
+                alert('Terjadi kesalahan: ' + error);
+            });
+    }
+
+    function displayDecisionTreeResults(data) {
+        let html = `
+        <div class="result-section">
+            <h4>🎯 Akurasi Model</h4>
+            <div class="accuracy-box">
+                <div class="accuracy-value">${(data.accuracy * 100).toFixed(2)}%</div>
+            </div>
+        </div>
+        
+        <div class="result-section">
+            <h4>🌳 Informasi Decision Tree</h4>
+            <p><strong>Kedalaman Maksimum:</strong> ${data.tree_info.max_depth}</p>
+            <p><strong>Jumlah Leaf Nodes:</strong> ${data.tree_info.n_leaves}</p>
+            <p><strong>Jumlah Fitur:</strong> ${data.tree_info.n_features}</p>
+        </div>
+        
+        <div class="result-section">
+            <h4>📊 Dataset Info</h4>
+            <p><strong>Total Sampel:</strong> ${data.dataset_info.total_samples}</p>
+            <p><strong>Data Training:</strong> ${data.dataset_info.train_samples}</p>
+            <p><strong>Data Testing:</strong> ${data.dataset_info.test_samples}</p>
+            <p><strong>Jumlah Kelas:</strong> ${data.dataset_info.num_classes}</p>
+            <p><strong>Fitur:</strong> ${data.dataset_info.feature_names.join(', ')}</p>
+        </div>
+        
+        <div class="result-section">
+            <h4>⭐ Feature Importances</h4>
+            <table class="result-table">
+                <tr>
+                    <th>Fitur</th>
+                    <th>Importance</th>
+                </tr>
+    `;
+
+        data.feature_importances.forEach(item => {
+            html += `
+                <tr>
+                    <td>${item.feature}</td>
+                    <td>${item.importance.toFixed(4)}</td>
+                </tr>
+        `;
+        });
+
+        html += `
+            </table>
+        </div>
+        
+        <div class="result-section">
+            <h4>🎲 Confusion Matrix</h4>
+            <table class="result-table confusion-matrix">
+                <tr>
+                    <th></th>
+    `;
+
+        data.classes.forEach(cls => {
+            html += `<th>Pred ${cls}</th>`;
+        });
+        html += '</tr>';
+
+        data.confusion_matrix.forEach((row, i) => {
+            html += `<tr><th>Actual ${data.classes[i]}</th>`;
+            row.forEach(val => {
+                html += `<td>${val}</td>`;
+            });
+            html += '</tr>';
+        });
+
+        html += `
+            </table>
+        </div>
+        
+        <div class="result-section">
+            <h4>📈 Class Metrics</h4>
+            <table class="result-table">
+                <tr>
+                    <th>Class</th>
+                    <th>Precision</th>
+                    <th>Recall</th>
+                    <th>F1-Score</th>
+                    <th>Support</th>
+                </tr>
+    `;
+
+        data.class_metrics.forEach(metric => {
+            html += `
+                <tr>
+                    <td>${metric.class}</td>
+                    <td>${metric.precision.toFixed(4)}</td>
+                    <td>${metric.recall.toFixed(4)}</td>
+                    <td>${metric.f1_score.toFixed(4)}</td>
+                    <td>${metric.support}</td>
+                </tr>
+        `;
+        });
+
+        html += `
+            </table>
+        </div>
+        
+        <div class="result-section">
+            <h4>📊 Overall Metrics</h4>
+            <h5>Macro Average</h5>
+            <p><strong>Precision:</strong> ${data.macro_avg.precision.toFixed(4)}</p>
+            <p><strong>Recall:</strong> ${data.macro_avg.recall.toFixed(4)}</p>
+            <p><strong>F1-Score:</strong> ${data.macro_avg.f1_score.toFixed(4)}</p>
+            
+            <h5 style="margin-top: 15px;">Weighted Average</h5>
+            <p><strong>Precision:</strong> ${data.weighted_avg.precision.toFixed(4)}</p>
+            <p><strong>Recall:</strong> ${data.weighted_avg.recall.toFixed(4)}</p>
+            <p><strong>F1-Score:</strong> ${data.weighted_avg.f1_score.toFixed(4)}</p>
+        </div>
+    `;
+
+        document.getElementById('dtResultContent').innerHTML = html;
+    }
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="nb-wrapper">
         <div class="nb-header">
-            <h2>🧠 Klasifikasi Data menggunakan Naive Bayes</h2>
-            <p class="subtitle">Upload dataset CSV custom untuk analisis menggunakan Gaussian Naive Bayes</p>
+            <h2>🌳 Klasifikasi Data menggunakan Decision Tree</h2>
+            <p class="subtitle">Upload dataset CSV custom untuk analisis menggunakan Decision Tree Classifier</p>
         </div>
 
         <div class="nb-main-content">
@@ -32,28 +234,49 @@
                     </div>
 
                     <div class="form-group" style="margin-top: 20px;">
-                        <label for="test_size_nb">
+                        <label for="test_size_dt">
                             <span class="label-icon">📏</span>
                             Rasio Ukuran Testing
                         </label>
-                        <input type="number" id="test_size_nb" value="0.3" min="0.1" max="0.5" step="0.05">
+                        <input type="number" id="test_size_dt" value="0.3" min="0.1" max="0.5" step="0.05">
                         <small class="input-hint">Proporsi data untuk pengujian (bawaan: 30%)</small>
                     </div>
 
-                    <button id="btnProcessNB" class="process-button nb-button" onclick="processNaiveBayes()" disabled>
-                        🧮 Klasifikasi dengan Naive Bayes
+                    <div class="form-group">
+                        <label for="max_depth_dt">
+                            <span class="label-icon">🌲</span>
+                            Kedalaman Maksimum Tree
+                        </label>
+                        <select id="max_depth_dt">
+                            <option value="None">None (Unlimited)</option>
+                            <option value="3">3</option>
+                            <option value="5">5</option>
+                            <option value="7">7</option>
+                            <option value="10">10</option>
+                            <option value="15">15</option>
+                        </select>
+                        <small class="input-hint">Batasi kedalaman untuk mencegah overfitting</small>
+                    </div>
+
+                    <button id="btnProcessDT" class="process-button nb-button" onclick="processDecisionTree()" disabled>
+                        🌳 Klasifikasi dengan Decision Tree
                     </button>
                 </div>
 
                 <div class="card info-card" style="margin-top: 20px;">
-                    <h3>📚 Tentang Naive Bayes</h3>
-                    <p><strong>Gaussian Naive Bayes</strong> adalah algoritma klasifikasi probabilistik yang cocok untuk
-                        data kontinu.</p>
+                    <h3>📚 Tentang Decision Tree</h3>
+                    <p><strong>Decision Tree</strong> adalah algoritma supervised learning yang menggunakan struktur
+                        pohon untuk membuat keputusan.</p>
                     <p><strong>Format CSV:</strong> Header di baris pertama, kolom terakhir = kelas target</p>
                     <p><strong>Data:</strong> Semua fitur harus numerik, target berupa label kelas (0, 1, 2, ...)</p>
-                    <p><strong>Metrik:</strong> Akurasi, Presisi, Recall, Skor F1</p>
-                    <p><strong>Contoh:</strong> <a href="/static/data/sample_iris.csv" download>Unduh
-                            sample_iris.csv</a></p>
+                    <p><strong>Metrik:</strong> Akurasi, Presisi, Recall, Skor F1, Feature Importance</p>
+                    <p><strong>Contoh Dataset:</strong></p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li><a href="/static/data/sample_iris.csv" download style="color: #667eea; font-weight: 500;">📥
+                                Iris Dataset (3 kelas)</a></li>
+                        <li><a href="/static/data/sample_loan.csv" download style="color: #667eea; font-weight: 500;">📥
+                                Loan Approval (2 kelas)</a></li>
+                    </ul>
                 </div>
             </div>
 
@@ -63,14 +286,14 @@
                     <div id="dataPreviewContent" class="data-preview-scroll"></div>
                 </div>
 
-                <div id="loadingNB" class="loading">
+                <div id="loadingDT" class="loading">
                     <div class="loading-spinner"></div>
                     <p>⏳ Memproses klasifikasi...</p>
                 </div>
 
-                <div id="resultNB" class="card" style="display: none;">
+                <div id="resultDT" class="card" style="display: none;">
                     <h3 class="card-title">📊 Hasil Klasifikasi</h3>
-                    <div id="nbResultContent"></div>
+                    <div id="dtResultContent"></div>
                 </div>
             </div>
         </div>

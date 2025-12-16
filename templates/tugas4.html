@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}Tugas 4 - Naive Bayes Classification{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let csvData = null;
+
+    function handleCSVUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            csvData = e.target.result;
+            const lines = csvData.split('\n').filter(line => line.trim());
+            const cols = lines[0].split(',').length;
+
+            document.getElementById('csvFileName').textContent = file.name;
+            document.getElementById('csvRows').textContent = lines.length - 1;
+            document.getElementById('csvCols').textContent = cols;
+            document.getElementById('csvInfo').style.display = 'block';
+            document.getElementById('btnProcessNB').disabled = false;
+
+            // Show preview
+            showDataPreview(csvData);
+        };
+        reader.readAsText(file);
+    }
+
+    function showDataPreview(csvData) {
+        const lines = csvData.split('\n').filter(line => line.trim()).slice(0, 6);
+        let html = '<table class="preview-table" style="width: 100%; border-collapse: collapse; font-size: 13px;">';
+        lines.forEach((line, index) => {
+            html += '<tr>';
+            line.split(',').forEach(cell => {
+                if (index === 0) {
+                    html += `<th style="background: #667eea; color: white; padding: 8px; border: 1px solid #ddd;">${cell}</th>`;
+                } else {
+                    html += `<td style="padding: 8px; border: 1px solid #ddd;">${cell}</td>`;
+                }
+            });
+            html += '</tr>';
+        });
+        html += '</table>';
+        document.getElementById('dataPreviewContent').innerHTML = html;
+        document.getElementById('dataPreview').style.display = 'block';
+    }
+
+    function processNaiveBayes() {
+        if (!csvData) {
+            alert('Silakan upload file CSV terlebih dahulu!');
+            return;
+        }
+
+        const test_size = parseFloat(document.getElementById('test_size_nb').value);
+
+        document.getElementById('loadingNB').style.display = 'block';
+        document.getElementById('resultNB').style.display = 'none';
+
+        fetch('/predict_naive_bayes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                csv_data: csvData,
+                test_size: test_size
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loadingNB').style.display = 'none';
+
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+
+                displayNaiveBayesResults(data);
+                document.getElementById('resultNB').style.display = 'block';
+            })
+            .catch(error => {
+                document.getElementById('loadingNB').style.display = 'none';
+                alert('Terjadi kesalahan: ' + error);
+            });
+    }
+
+    function displayNaiveBayesResults(data) {
+        let html = `
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);">
+            <div style="text-align: center;">
+                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">🎯 Akurasi Model</div>
+                <div style="font-size: 42px; font-weight: bold; margin: 10px 0;">${(data.accuracy * 100).toFixed(2)}%</div>
+                <div style="font-size: 13px; opacity: 0.8; margin-top: 5px;">Gaussian Naive Bayes Classifier</div>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">
+            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 18px; border-radius: 10px; text-align: center;">
+                <div style="font-size: 12px; opacity: 0.9; margin-bottom: 5px;">📊 SAMPEL</div>
+                <div style="font-size: 22px; font-weight: bold;">${data.dataset_info.total_samples}</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 18px; border-radius: 10px; text-align: center;">
+                <div style="font-size: 12px; opacity: 0.9; margin-bottom: 5px;">🏷️ KELAS</div>
+                <div style="font-size: 22px; font-weight: bold;">${data.dataset_info.num_classes}</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 18px; border-radius: 10px; text-align: center;">
+                <div style="font-size: 12px; opacity: 0.9; margin-bottom: 5px;">📈 FITUR</div>
+                <div style="font-size: 22px; font-weight: bold;">${data.dataset_info.num_features}</div>
+            </div>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #4facfe;">
+            <h4 style="margin-top: 0; color: #2c3e50; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 20px;">📋</span>
+                <span>Dataset Information</span>
+            </h4>
+            <div style="background: white; padding: 15px; border-radius: 8px; margin-top: 10px;">
+                <p style="margin: 5px 0;"><strong>Total Samples:</strong> ${data.dataset_info.total_samples}</p>
+                <p style="margin: 5px 0;"><strong>Training Samples:</strong> ${data.dataset_info.train_samples} (${Math.round((1 - data.dataset_info.test_size_ratio) * 100)}%)</p>
+                <p style="margin: 5px 0;"><strong>Testing Samples:</strong> ${data.dataset_info.test_samples} (${Math.round(data.dataset_info.test_size_ratio * 100)}%)</p>
+                <p style="margin: 5px 0;"><strong>Features:</strong> ${data.dataset_info.feature_names.join(', ')}</p>
+                <p style="margin: 5px 0;"><strong>Target:</strong> ${data.dataset_info.target_name}</p>
+            </div>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #f5576c;">
+            <h4 style="margin-top: 0; color: #2c3e50; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 20px;">🎲</span>
+                <span>Confusion Matrix</span>
+            </h4>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-top: 10px;">
+                    <thead>
+                        <tr style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                            <th style="padding: 12px; text-align: center; font-weight: 600;">Actual \\ Predicted</th>
+    `;
+
+        data.classes.forEach(cls => {
+            html += `<th style="padding: 12px; text-align: center; font-weight: 600;">Class ${cls}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+
+        data.confusion_matrix.forEach((row, i) => {
+            html += `<tr style="border-bottom: 1px solid #e9ecef;"><th style="padding: 12px; background: #f8f9fa; font-weight: 600;">Class ${data.classes[i]}</th>`;
+            row.forEach((val, j) => {
+                const isCorrect = i === j;
+                const bgColor = isCorrect ? 'background: rgba(40, 167, 69, 0.1);' : '';
+                const fontWeight = isCorrect ? 'font-weight: 600; color: #28a745;' : 'color: #6c757d;';
+                html += `<td style="padding: 12px; text-align: center; ${bgColor} ${fontWeight}">${val}</td>`;
+            });
+            html += '</tr>';
+        });
+
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #43e97b;">
+            <h4 style="margin-top: 0; color: #2c3e50; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 20px;">📊</span>
+                <span>Class Performance Metrics</span>
+            </h4>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-top: 10px;">
+                    <thead>
+                        <tr style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                            <th style="padding: 12px; text-align: center; font-weight: 600;">Class</th>
+                            <th style="padding: 12px; text-align: center; font-weight: 600;">Precision</th>
+                            <th style="padding: 12px; text-align: center; font-weight: 600;">Recall</th>
+                            <th style="padding: 12px; text-align: center; font-weight: 600;">F1-Score</th>
+                            <th style="padding: 12px; text-align: center; font-weight: 600;">Support</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
+
+        data.class_metrics.forEach(metric => {
+            html += `
+                        <tr style="border-bottom: 1px solid #e9ecef;">
+                            <td style="padding: 12px; text-align: center; font-weight: 600; background: #f8f9fa;">Class ${metric.class}</td>
+                            <td style="padding: 12px; text-align: center;">
+                                <span style="background: #e3f2fd; color: #1976d2; padding: 4px 8px; border-radius: 4px; font-weight: 500;">
+                                    ${(metric.precision * 100).toFixed(2)}%
+                                </span>
+                            </td>
+                            <td style="padding: 12px; text-align: center;">
+                                <span style="background: #f3e5f5; color: #7b1fa2; padding: 4px 8px; border-radius: 4px; font-weight: 500;">
+                                    ${(metric.recall * 100).toFixed(2)}%
+                                </span>
+                            </td>
+                            <td style="padding: 12px; text-align: center;">
+                                <span style="background: #e8f5e9; color: #388e3c; padding: 4px 8px; border-radius: 4px; font-weight: 500;">
+                                    ${(metric.f1_score * 100).toFixed(2)}%
+                                </span>
+                            </td>
+                            <td style="padding: 12px; text-align: center; color: #495057;">${metric.support}</td>
+                        </tr>
+        `;
+        });
+
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                <h5 style="margin-top: 0; font-size: 16px; opacity: 0.9; margin-bottom: 15px;">📊 Macro Average</h5>
+                <p style="margin: 8px 0;"><strong>Precision:</strong> ${(data.macro_avg.precision * 100).toFixed(2)}%</p>
+                <p style="margin: 8px 0;"><strong>Recall:</strong> ${(data.macro_avg.recall * 100).toFixed(2)}%</p>
+                <p style="margin: 8px 0;"><strong>F1-Score:</strong> ${(data.macro_avg.f1_score * 100).toFixed(2)}%</p>
+            </div>
+            <div style="background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%); padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                <h5 style="margin-top: 0; font-size: 16px; opacity: 0.9; margin-bottom: 15px;">⚖️ Weighted Average</h5>
+                <p style="margin: 8px 0;"><strong>Precision:</strong> ${(data.weighted_avg.precision * 100).toFixed(2)}%</p>
+                <p style="margin: 8px 0;"><strong>Recall:</strong> ${(data.weighted_avg.recall * 100).toFixed(2)}%</p>
+                <p style="margin: 8px 0;"><strong>F1-Score:</strong> ${(data.weighted_avg.f1_score * 100).toFixed(2)}%</p>
+            </div>
+        </div>
+    `;
+
+        document.getElementById('nbResultContent').innerHTML = html;
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="nb-wrapper">
+        <div class="nb-header">
+            <h2>🧠 Klasifikasi Data menggunakan Naive Bayes</h2>
+            <p class="subtitle">Upload dataset CSV custom untuk analisis menggunakan Gaussian Naive Bayes</p>
+        </div>
+
+        <div class="nb-main-content">
+            <div class="nb-left">
+                <div class="card">
+                    <h3 class="card-title">📤 Upload Dataset CSV</h3>
+                    <div class="csv-upload-area" id="csvUploadArea"
+                        onclick="document.getElementById('csvInput').click()">
+                        <input type="file" id="csvInput" accept=".csv" onchange="handleCSVUpload(event)"
+                            style="display: none;">
+                        <div class="upload-icon">📊</div>
+                        <p style="color: #666; margin-bottom: 5px;">Klik atau seret & lepas file CSV</p>
+                        <p style="color: #999; font-size: 14px;">Format: CSV dengan header</p>
+                        <p style="color: #999; font-size: 12px; margin-top: 10px;">Kolom terakhir akan digunakan sebagai
+                            target/label</p>
+                    </div>
+
+                    <div id="csvInfo" class="csv-info" style="display: none; margin-top: 15px;">
+                        <p><strong>File:</strong> <span id="csvFileName"></span></p>
+                        <p><strong>Jumlah baris:</strong> <span id="csvRows"></span></p>
+                        <p><strong>Jumlah kolom:</strong> <span id="csvCols"></span></p>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label for="test_size_nb">
+                            <span class="label-icon">📏</span>
+                            Rasio Ukuran Testing
+                        </label>
+                        <input type="number" id="test_size_nb" value="0.3" min="0.1" max="0.5" step="0.05">
+                        <small class="input-hint">Proporsi data untuk pengujian (bawaan: 30%)</small>
+                    </div>
+
+                    <button id="btnProcessNB" class="process-button nb-button" onclick="processNaiveBayes()" disabled>
+                        🧮 Klasifikasi dengan Naive Bayes
+                    </button>
+                </div>
+
+                <div class="card info-card" style="margin-top: 20px;">
+                    <h3>📚 Tentang Naive Bayes</h3>
+                    <p><strong>Gaussian Naive Bayes</strong> adalah algoritma klasifikasi probabilistik yang cocok untuk
+                        data kontinu.</p>
+                    <p><strong>Format CSV:</strong> Header di baris pertama, kolom terakhir = kelas target</p>
+                    <p><strong>Data:</strong> Semua fitur harus numerik, target berupa label kelas (0, 1, 2, ...)</p>
+                    <p><strong>Metrik:</strong> Akurasi, Presisi, Recall, Skor F1</p>
+                    <p><strong>Contoh Dataset:</strong></p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li><a href="/static/data/sample_iris.csv" download style="color: #667eea; font-weight: 500;">📥
+                                Iris Dataset (3 kelas)</a></li>
+                        <li><a href="/static/data/sample_loan.csv" download style="color: #667eea; font-weight: 500;">📥
+                                Loan Approval (2 kelas)</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="nb-right">
+                <div id="dataPreview" class="card" style="display: none;">
+                    <h3 class="card-title">👀 Preview Data</h3>
+                    <div id="dataPreviewContent" class="data-preview-scroll"></div>
+                </div>
+
+                <div id="loadingNB" class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>⏳ Memproses klasifikasi...</p>
+                </div>
+
+                <div id="resultNB" class="card" style="display: none;">
+                    <h3 class="card-title">📊 Hasil Klasifikasi</h3>
+                    <div id="nbResultContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

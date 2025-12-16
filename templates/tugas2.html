@@ -1,83 +1,264 @@
 {% extends "base.html" %}
 
-{% block title %}Tugas 2 - KNN Regression{% endblock %}
+{% block title %}Tugas 2 - K-Nearest Neighbors{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function predictKNN() {
+        const luas_panen = parseFloat(document.getElementById('luas_panen').value);
+        const hasil_produksi = parseFloat(document.getElementById('hasil_produksi').value);
+        const k = parseInt(document.getElementById('k_value').value);
+
+        const features = [];
+        if (document.getElementById('feature_luas').checked) features.push('luas_panen');
+        if (document.getElementById('feature_hasil').checked) features.push('hasil_produksi');
+
+        if (!luas_panen || !hasil_produksi) {
+            alert('Mohon isi semua input!');
+            return;
+        }
+
+        if (features.length === 0) {
+            alert('Pilih minimal satu fitur!');
+            return;
+        }
+
+        document.getElementById('loadingKNN').style.display = 'block';
+        document.getElementById('resultKNN').style.display = 'none';
+
+        fetch('/predict_knn', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                luas_panen: luas_panen,
+                hasil_produksi: hasil_produksi,
+                k: k,
+                features: features
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loadingKNN').style.display = 'none';
+
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+
+                let html = `
+            <div class="result-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);">
+                <div style="text-align: center;">
+                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">💰 Prediksi Harga</div>
+                    <div style="font-size: 36px; font-weight: bold; margin: 10px 0;">Rp ${data.predicted_price.toLocaleString('id-ID')}</div>
+                    <div style="font-size: 13px; opacity: 0.8; margin-top: 5px;">Berdasarkan ${data.k_value} tetangga terdekat</div>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <div class="result-section" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 12px; opacity: 0.9; margin-bottom: 5px;">⚙️ NILAI K</div>
+                    <div style="font-size: 28px; font-weight: bold;">${data.k_value}</div>
+                </div>
+                <div class="result-section" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 12px; opacity: 0.9; margin-bottom: 5px;">📊 FITUR</div>
+                    <div style="font-size: 16px; font-weight: bold;">${data.features_used.join(', ')}</div>
+                </div>
+            </div>
+            
+            <div class="result-section" style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #4facfe;">
+                <h4 style="margin-top: 0; color: #2c3e50; display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 20px;">📥</span>
+                    <span>Input Data</span>
+                </h4>
+                <table class="result-table" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                    <thead>
+                        <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                            <th style="padding: 12px; text-align: left; font-weight: 600;">Fitur</th>
+                            <th style="padding: 12px; text-align: right; font-weight: 600;">Original</th>
+                            <th style="padding: 12px; text-align: right; font-weight: 600;">Normalized</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+                if (data.input_normalized.luas_panen !== null) {
+                    html += `
+                        <tr style="border-bottom: 1px solid #e9ecef;">
+                            <td style="padding: 12px; font-weight: 500;">🌾 Luas Panen</td>
+                            <td style="padding: 12px; text-align: right; color: #495057;">${data.input_original.luas_panen.toLocaleString('id-ID')} ha</td>
+                            <td style="padding: 12px; text-align: right;">
+                                <span style="background: #e3f2fd; color: #1976d2; padding: 4px 8px; border-radius: 4px; font-weight: 500;">
+                                    ${data.input_normalized.luas_panen.toFixed(4)}
+                                </span>
+                            </td>
+                        </tr>
+            `;
+                }
+
+                if (data.input_normalized.hasil_produksi !== null) {
+                    html += `
+                        <tr>
+                            <td style="padding: 12px; font-weight: 500;">📦 Hasil Produksi</td>
+                            <td style="padding: 12px; text-align: right; color: #495057;">${data.input_original.hasil_produksi.toLocaleString('id-ID')} ton</td>
+                            <td style="padding: 12px; text-align: right;">
+                                <span style="background: #e3f2fd; color: #1976d2; padding: 4px 8px; border-radius: 4px; font-weight: 500;">
+                                    ${data.input_normalized.hasil_produksi.toFixed(4)}
+                                </span>
+                            </td>
+                        </tr>
+            `;
+                }
+
+                html += `
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="result-section" style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #f5576c;">
+                <h4 style="margin-top: 0; color: #2c3e50; display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 20px;">🎯</span>
+                    <span>K-Nearest Neighbors</span>
+                </h4>
+                <table class="result-table" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                    <thead>
+                        <tr style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                            <th style="padding: 12px; text-align: center; font-weight: 600; width: 60px;">🏆 Rank</th>
+                            <th style="padding: 12px; text-align: center; font-weight: 600; width: 80px;">Index</th>
+                            <th style="padding: 12px; text-align: center; font-weight: 600;">📏 Distance</th>
+                            <th style="padding: 12px; text-align: right; font-weight: 600;">💰 Harga</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+                data.nearest_neighbors.forEach((neighbor, i) => {
+                    const rankEmoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '⭐';
+
+                    html += `
+                        <tr style="border-bottom: 1px solid #e9ecef; ${i < 3 ? 'background: rgba(255, 215, 0, 0.05);' : ''}">
+                            <td style="padding: 12px; text-align: center;">
+                                <span style="font-size: 18px;">${rankEmoji}</span>
+                                <span style="font-weight: 600; margin-left: 4px;">${i + 1}</span>
+                            </td>
+                            <td style="padding: 12px; text-align: center; font-weight: 500; color: #6c757d;">
+                                <span style="background: #f8f9fa; padding: 4px 10px; border-radius: 4px;">
+                                    #${neighbor.index}
+                                </span>
+                            </td>
+                            <td style="padding: 12px; text-align: center; font-family: 'Courier New', monospace; color: #495057;">
+                                ${neighbor.distance.toFixed(6)}
+                            </td>
+                            <td style="padding: 12px; text-align: right; font-weight: 600; color: #28a745;">
+                                Rp ${neighbor.price.toLocaleString('id-ID')}
+                            </td>
+                        </tr>
+            `;
+                });
+
+                html += `
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px;">
+                <div style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); padding: 18px; border-radius: 10px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                    <div style="font-size: 12px; opacity: 0.8; margin-bottom: 5px; font-weight: 500;">📊 RATA-RATA</div>
+                    <div style="font-size: 18px; font-weight: bold; color: #2c3e50;">Rp ${data.statistics.avg_neighbor_price.toLocaleString('id-ID')}</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); padding: 18px; border-radius: 10px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                    <div style="font-size: 12px; opacity: 0.8; margin-bottom: 5px; font-weight: 500;">⬇️ MINIMUM</div>
+                    <div style="font-size: 18px; font-weight: bold; color: #2c3e50;">Rp ${data.statistics.min_neighbor_price.toLocaleString('id-ID')}</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%); padding: 18px; border-radius: 10px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                    <div style="font-size: 12px; opacity: 0.8; margin-bottom: 5px; font-weight: 500;">⬆️ MAKSIMUM</div>
+                    <div style="font-size: 18px; font-weight: bold; color: #2c3e50;">Rp ${data.statistics.max_neighbor_price.toLocaleString('id-ID')}</div>
+                </div>
+            </div>
+        `;
+
+                document.getElementById('knnResultContent').innerHTML = html;
+                document.getElementById('resultKNN').style.display = 'block';
+            })
+            .catch(error => {
+                document.getElementById('loadingKNN').style.display = 'none';
+                alert('Terjadi kesalahan: ' + error);
+            });
+    }
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="knn-wrapper">
         <div class="knn-header">
-            <h2>🌾 Prediksi Harga Beras menggunakan KNN Regression</h2>
-            <p class="subtitle">Masukkan data Luas Panen dan Hasil Produksi untuk memprediksi harga beras</p>
+            <h2>🧮 Prediksi Harga menggunakan K-Nearest Neighbors</h2>
+            <p class="subtitle">Implementasi algoritma KNN untuk regresi harga berdasarkan luas panen dan hasil produksi
+            </p>
         </div>
 
         <div class="knn-main-content">
             <div class="knn-left">
                 <div class="card">
-                    <h3 class="card-title">📝 Input Data</h3>
-                    <form id="knnForm" onsubmit="processKNN(event)">
-                        <div class="form-group">
-                            <label for="luas_panen">
-                                <span class="label-icon">🌱</span>
-                                Luas Panen (ha)
-                            </label>
-                            <input type="number" id="luas_panen" name="luas_panen" step="0.01" min="0"
-                                placeholder="Contoh: 3000" required>
-                            <small class="input-hint">Rentang: 1000 - 5000 ha</small>
-                        </div>
+                    <h3 class="card-title">📥 Input Data</h3>
 
-                        <div class="form-group">
-                            <label for="hasil_produksi">
-                                <span class="label-icon">📦</span>
-                                Hasil Produksi (ton)
-                            </label>
-                            <input type="number" id="hasil_produksi" name="hasil_produksi" step="0.01" min="0"
-                                placeholder="Contoh: 5000" required>
-                            <small class="input-hint">Rentang: 2000 - 8000 ton</small>
-                        </div>
+                    <div class="form-group">
+                        <label for="luas_panen">
+                            <span class="label-icon">🌾</span>
+                            Luas Panen (hektar)
+                        </label>
+                        <input type="number" id="luas_panen" placeholder="Contoh: 3000" min="1000" max="5000" step="100"
+                            value="3000">
+                        <small class="input-hint">Range: 1000 - 5000 hektar</small>
+                    </div>
 
-                        <div class="form-group">
-                            <label for="nilai_k">
-                                <span class="label-icon">🎯</span>
-                                Nilai K (Tetangga Terdekat)
-                            </label>
-                            <input type="number" id="nilai_k" name="nilai_k" value="2" min="1" max="10" required>
-                            <small class="input-hint">💡 Nilai optimal dari jurnal: K = 2</small>
-                        </div>
+                    <div class="form-group">
+                        <label for="hasil_produksi">
+                            <span class="label-icon">📦</span>
+                            Hasil Produksi (ton)
+                        </label>
+                        <input type="number" id="hasil_produksi" placeholder="Contoh: 5000" min="2000" max="8000"
+                            step="100" value="5000">
+                        <small class="input-hint">Range: 2000 - 8000 ton</small>
+                    </div>
 
-                        <div class="form-group feature-select-group">
-                            <label class="main-label">
-                                <span class="label-icon">✅</span>
-                                Pilih Fitur yang Digunakan
-                            </label>
-                            <div class="checkbox-wrapper">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="features" value="luas_panen" checked>
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-text">Luas Panen</span>
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="features" value="hasil_produksi" checked>
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-text">Hasil Produksi</span>
-                                </label>
-                            </div>
-                            <small class="input-hint">Pilih minimal satu fitur</small>
-                        </div>
+                    <div class="form-group">
+                        <label for="k_value">
+                            <span class="label-icon">🔢</span>
+                            Nilai K
+                        </label>
+                        <input type="number" id="k_value" value="3" min="1" max="10" step="1">
+                        <small class="input-hint">Jumlah tetangga terdekat (1-10)</small>
+                    </div>
 
-                        <button type="submit" class="process-button knn-button">
-                            🔮 Prediksi Harga Beras
-                        </button>
-                    </form>
+                    <div class="form-group">
+                        <label>
+                            <span class="label-icon">✅</span>
+                            Fitur yang Digunakan
+                        </label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="feature_luas" checked>
+                                Luas Panen
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="feature_hasil" checked>
+                                Hasil Produksi
+                            </label>
+                        </div>
+                    </div>
+
+                    <button id="btnProcessKNN" class="process-button knn-button" onclick="predictKNN()">
+                        🚀 Prediksi Harga
+                    </button>
                 </div>
 
                 <div class="card info-card" style="margin-top: 20px;">
-                    <h3>📚 Tentang KNN Regression</h3>
-                    <p><strong>K-Nearest Neighbor (KNN)</strong> adalah algoritma machine learning yang memprediksi
-                        nilai berdasarkan K tetangga terdekat.</p>
-                    <p><strong>Dataset:</strong> Menggunakan data harga beras Indonesia (Januari 2019 - Desember 2021)
-                    </p>
-                    <p><strong>Normalisasi:</strong> Min-Max Normalization (0-1)</p>
-                    <p><strong>Evaluasi:</strong> MAE = 55.55, RMSE = 81.64 (K=2)</p>
+                    <h3>📚 Tentang K-Nearest Neighbors</h3>
+                    <p><strong>KNN</strong> adalah algoritma supervised learning yang digunakan untuk klasifikasi dan
+                        regresi.</p>
+                    <p><strong>Prinsip:</strong> Prediksi berdasarkan K data terdekat dalam ruang fitur.</p>
+                    <p><strong>Distance:</strong> Menggunakan Euclidean distance.</p>
+                    <p><strong>Normalisasi:</strong> Data dinormalisasi ke range [0, 1].</p>
                 </div>
             </div>
 
@@ -88,7 +269,7 @@
                 </div>
 
                 <div id="resultKNN" class="card" style="display: none;">
-                    <h3 class="card-title">📊 Hasil Prediksi</h3>
+                    <h3 class="card-title">📊 Hasil Prediksi KNN</h3>
                     <div id="knnResultContent"></div>
                 </div>
             </div>
