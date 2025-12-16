@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Tugas 1 - GLCM Feature Extraction{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <h1>📸 Ekstraksi Fitur GLCM</h1>
+        <p>Gray-Level Co-occurrence Matrix Feature Extraction</p>
+    </div>
+
+    <div class="main-content">
+        <div>
+            <div class="card">
+                <h2>📤 Upload Gambar</h2>
+                <div class="upload-area" onclick="document.getElementById('imageInput').click()">
+                    <input type="file" id="imageInput" accept="image/*" onchange="handleImageUpload(event)">
+                    <div class="upload-icon">📷</div>
+                    <p style="color: #666; margin-bottom: 5px;">Klik untuk memilih gambar</p>
+                    <p style="color: #999; font-size: 14px;">Format: JPEG, PNG</p>
+                </div>
+                <img id="previewImage" class="preview-image" style="display: none;">
+            </div>
+
+            <div class="card" id="angleCard" style="display: none; margin-top: 20px;">
+                <h2>🎯 Pilih Sudut GLCM</h2>
+                <div class="angle-selector">
+                    <button class="angle-button active" onclick="selectAngle(0)">0°</button>
+                    <button class="angle-button" onclick="selectAngle(45)">45°</button>
+                    <button class="angle-button" onclick="selectAngle(90)">90°</button>
+                    <button class="angle-button" onclick="selectAngle(135)">135°</button>
+                </div>
+                <button class="process-button" onclick="processImage()">
+                    🧮 Hitung Fitur GLCM
+                </button>
+            </div>
+        </div>
+
+        <div>
+            <div class="card info-card">
+                <h3>ℹ️ Tentang Fitur GLCM</h3>
+                <p><strong>Contrast:</strong> Mengukur perbedaan intensitas lokal dalam gambar</p>
+                <p><strong>Dissimilarity:</strong> Mengukur ketidaksamaan antara pixel</p>
+                <p><strong>Homogeneity:</strong> Mengukur keseragaman tekstur</p>
+                <p><strong>Energy:</strong> Mengukur keseragaman distribusi pixel</p>
+                <p><strong>ASM:</strong> Angular Second Moment - kuadrat dari energy</p>
+                <p><strong>Correlation:</strong> Mengukur korelasi linear antara pixel</p>
+            </div>
+
+            <div class="card" id="resultsCard" style="display: none; margin-top: 20px;">
+                <h2>📊 Hasil Ekstraksi Fitur</h2>
+                <div class="loading" id="loading">
+                    <p>⏳ Memproses gambar...</p>
+                </div>
+                <div id="resultsContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Tugas 2 - KNN Regression{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="knn-wrapper">
+        <div class="knn-header">
+            <h2>🌾 Prediksi Harga Beras menggunakan KNN Regression</h2>
+            <p class="subtitle">Masukkan data Luas Panen dan Hasil Produksi untuk memprediksi harga beras</p>
+        </div>
+
+        <div class="knn-main-content">
+            <div class="knn-left">
+                <div class="card">
+                    <h3 class="card-title">📝 Input Data</h3>
+                    <form id="knnForm" onsubmit="processKNN(event)">
+                        <div class="form-group">
+                            <label for="luas_panen">
+                                <span class="label-icon">🌱</span>
+                                Luas Panen (ha)
+                            </label>
+                            <input type="number" id="luas_panen" name="luas_panen" step="0.01" min="0"
+                                placeholder="Contoh: 3000" required>
+                            <small class="input-hint">Rentang: 1000 - 5000 ha</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="hasil_produksi">
+                                <span class="label-icon">📦</span>
+                                Hasil Produksi (ton)
+                            </label>
+                            <input type="number" id="hasil_produksi" name="hasil_produksi" step="0.01" min="0"
+                                placeholder="Contoh: 5000" required>
+                            <small class="input-hint">Rentang: 2000 - 8000 ton</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="nilai_k">
+                                <span class="label-icon">🎯</span>
+                                Nilai K (Tetangga Terdekat)
+                            </label>
+                            <input type="number" id="nilai_k" name="nilai_k" value="2" min="1" max="10" required>
+                            <small class="input-hint">💡 Nilai optimal dari jurnal: K = 2</small>
+                        </div>
+
+                        <div class="form-group feature-select-group">
+                            <label class="main-label">
+                                <span class="label-icon">✅</span>
+                                Pilih Fitur yang Digunakan
+                            </label>
+                            <div class="checkbox-wrapper">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="features" value="luas_panen" checked>
+                                    <span class="checkbox-custom"></span>
+                                    <span class="checkbox-text">Luas Panen</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="features" value="hasil_produksi" checked>
+                                    <span class="checkbox-custom"></span>
+                                    <span class="checkbox-text">Hasil Produksi</span>
+                                </label>
+                            </div>
+                            <small class="input-hint">Pilih minimal satu fitur</small>
+                        </div>
+
+                        <button type="submit" class="process-button knn-button">
+                            🔮 Prediksi Harga Beras
+                        </button>
+                    </form>
+                </div>
+
+                <div class="card info-card" style="margin-top: 20px;">
+                    <h3>📚 Tentang KNN Regression</h3>
+                    <p><strong>K-Nearest Neighbor (KNN)</strong> adalah algoritma machine learning yang memprediksi
+                        nilai berdasarkan K tetangga terdekat.</p>
+                    <p><strong>Dataset:</strong> Menggunakan data harga beras Indonesia (Januari 2019 - Desember 2021)
+                    </p>
+                    <p><strong>Normalisasi:</strong> Min-Max Normalization (0-1)</p>
+                    <p><strong>Evaluasi:</strong> MAE = 55.55, RMSE = 81.64 (K=2)</p>
+                </div>
+            </div>
+
+            <div class="knn-right">
+                <div id="loadingKNN" class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>⏳ Memproses prediksi...</p>
+                </div>
+
+                <div id="resultKNN" class="card" style="display: none;">
+                    <h3 class="card-title">📊 Hasil Prediksi</h3>
+                    <div id="knnResultContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

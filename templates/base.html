@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Tugas Machine Learning{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h2>🔬 ML Lab</h2>
+            </div>
+            <div class="nav-menu">
+                <a href="/tugas1" class="nav-link {% if request.path == '/tugas1' %}active{% endif %}">
+                    Tugas 1 - GLCM
+                </a>
+                <a href="/tugas2" class="nav-link {% if request.path == '/tugas2' %}active{% endif %}">
+                    Tugas 2 - KNN
+                </a>
+                <a href="/tugas3" class="nav-link {% if request.path == '/tugas3' %}active{% endif %}">
+                    Tugas 3 - Naive Bayes
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2025 Tugas Vision & Machine Learning</p>
+    </footer>
+
+    <!-- Base Scripts -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Tugas 3 - Naive Bayes Classification{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="nb-wrapper">
+        <div class="nb-header">
+            <h2>🧠 Klasifikasi Data menggunakan Naive Bayes</h2>
+            <p class="subtitle">Upload dataset CSV custom untuk analisis menggunakan Gaussian Naive Bayes</p>
+        </div>
+
+        <div class="nb-main-content">
+            <div class="nb-left">
+                <div class="card">
+                    <h3 class="card-title">📤 Upload Dataset CSV</h3>
+                    <div class="csv-upload-area" id="csvUploadArea"
+                        onclick="document.getElementById('csvInput').click()">
+                        <input type="file" id="csvInput" accept=".csv" onchange="handleCSVUpload(event)"
+                            style="display: none;">
+                        <div class="upload-icon">📊</div>
+                        <p style="color: #666; margin-bottom: 5px;">Klik atau seret & lepas file CSV</p>
+                        <p style="color: #999; font-size: 14px;">Format: CSV dengan header</p>
+                        <p style="color: #999; font-size: 12px; margin-top: 10px;">Kolom terakhir akan digunakan sebagai
+                            target/label</p>
+                    </div>
+
+                    <div id="csvInfo" class="csv-info" style="display: none; margin-top: 15px;">
+                        <p><strong>File:</strong> <span id="csvFileName"></span></p>
+                        <p><strong>Jumlah baris:</strong> <span id="csvRows"></span></p>
+                        <p><strong>Jumlah kolom:</strong> <span id="csvCols"></span></p>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label for="test_size_nb">
+                            <span class="label-icon">📏</span>
+                            Rasio Ukuran Testing
+                        </label>
+                        <input type="number" id="test_size_nb" value="0.3" min="0.1" max="0.5" step="0.05">
+                        <small class="input-hint">Proporsi data untuk pengujian (bawaan: 30%)</small>
+                    </div>
+
+                    <button id="btnProcessNB" class="process-button nb-button" onclick="processNaiveBayes()" disabled>
+                        🧮 Klasifikasi dengan Naive Bayes
+                    </button>
+                </div>
+
+                <div class="card info-card" style="margin-top: 20px;">
+                    <h3>📚 Tentang Naive Bayes</h3>
+                    <p><strong>Gaussian Naive Bayes</strong> adalah algoritma klasifikasi probabilistik yang cocok untuk
+                        data kontinu.</p>
+                    <p><strong>Format CSV:</strong> Header di baris pertama, kolom terakhir = kelas target</p>
+                    <p><strong>Data:</strong> Semua fitur harus numerik, target berupa label kelas (0, 1, 2, ...)</p>
+                    <p><strong>Metrik:</strong> Akurasi, Presisi, Recall, Skor F1</p>
+                    <p><strong>Contoh:</strong> <a href="/static/data/sample_iris.csv" download>Unduh
+                            sample_iris.csv</a></p>
+                </div>
+            </div>
+
+            <div class="nb-right">
+                <div id="dataPreview" class="card" style="display: none;">
+                    <h3 class="card-title">👀 Preview Data</h3>
+                    <div id="dataPreviewContent" class="data-preview-scroll"></div>
+                </div>
+
+                <div id="loadingNB" class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>⏳ Memproses klasifikasi...</p>
+                </div>
+
+                <div id="resultNB" class="card" style="display: none;">
+                    <h3 class="card-title">📊 Hasil Klasifikasi</h3>
+                    <div id="nbResultContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
