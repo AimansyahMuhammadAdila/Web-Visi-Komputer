@@ -88,116 +88,137 @@
 
     function displayDecisionTreeResults(data) {
         let html = `
-        <div class="result-section">
-            <h4>🎯 Akurasi Model</h4>
-            <div class="accuracy-box">
-                <div class="accuracy-value">${(data.accuracy * 100).toFixed(2)}%</div>
+        <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);">
+            <div style="text-align: center;">
+                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">🎯 Akurasi Model</div>
+                <div style="font-size: 42px; font-weight: bold; margin: 10px 0;">${(data.accuracy * 100).toFixed(2)}%</div>
+                <div style="font-size: 13px; opacity: 0.9;">Decision Tree Classifier</div>
             </div>
         </div>
-        
-        <div class="result-section">
-            <h4>🌳 Informasi Decision Tree</h4>
-            <p><strong>Kedalaman Maksimum:</strong> ${data.tree_info.max_depth}</p>
-            <p><strong>Jumlah Leaf Nodes:</strong> ${data.tree_info.n_leaves}</p>
-            <p><strong>Jumlah Fitur:</strong> ${data.tree_info.n_features}</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
+            <div class="stat-card" style="background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+                <div style="font-size: 24px; margin-bottom: 5px;">🌲</div>
+                <div style="color: #64748b; font-size: 12px; font-weight: 600;">MAX DEPTH</div>
+                <div style="font-size: 20px; font-weight: 800; color: #1e293b;">${data.tree_info.max_depth || '∞'}</div>
+            </div>
+            <div class="stat-card" style="background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+                <div style="font-size: 24px; margin-bottom: 5px;">🍃</div>
+                <div style="color: #64748b; font-size: 12px; font-weight: 600;">LEAF NODES</div>
+                <div style="font-size: 20px; font-weight: 800; color: #1e293b;">${data.tree_info.n_leaves}</div>
+            </div>
+            <div class="stat-card" style="background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+                <div style="font-size: 24px; margin-bottom: 5px;">📊</div>
+                <div style="color: #64748b; font-size: 12px; font-weight: 600;">TOTAL SAMPLES</div>
+                <div style="font-size: 20px; font-weight: 800; color: #1e293b;">${data.dataset_info.total_samples}</div>
+            </div>
+            <div class="stat-card" style="background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+                <div style="font-size: 24px; margin-bottom: 5px;">🏷️</div>
+                <div style="color: #64748b; font-size: 12px; font-weight: 600;">CLASSES</div>
+                <div style="font-size: 20px; font-weight: 800; color: #1e293b;">${data.dataset_info.num_classes}</div>
+            </div>
         </div>
-        
-        <div class="result-section">
-            <h4>📊 Dataset Info</h4>
-            <p><strong>Total Sampel:</strong> ${data.dataset_info.total_samples}</p>
-            <p><strong>Data Training:</strong> ${data.dataset_info.train_samples}</p>
-            <p><strong>Data Testing:</strong> ${data.dataset_info.test_samples}</p>
-            <p><strong>Jumlah Kelas:</strong> ${data.dataset_info.num_classes}</p>
-            <p><strong>Fitur:</strong> ${data.dataset_info.feature_names.join(', ')}</p>
-        </div>
-        
-        <div class="result-section">
-            <h4>⭐ Feature Importances</h4>
-            <table class="result-table">
-                <tr>
-                    <th>Fitur</th>
-                    <th>Importance</th>
-                </tr>
+
+        <div class="result-section" style="background: #fff; padding: 25px; border-radius: 16px; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+            <h4 style="margin-top: 0; color: #1e293b; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                <span style="background: #e0e7ff; color: #4338ca; padding: 8px; border-radius: 8px;">⭐</span>
+                Feature Importances
+            </h4>
+            <div style="display: flex; flex-direction: column; gap: 15px;">
     `;
 
         data.feature_importances.forEach(item => {
+            const percentage = (item.importance * 100).toFixed(1);
             html += `
-                <tr>
-                    <td>${item.feature}</td>
-                    <td>${item.importance.toFixed(4)}</td>
-                </tr>
-        `;
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="width: 120px; font-weight: 600; color: #475569; font-size: 14px;">${item.feature}</div>
+                    <div style="flex: 1; height: 10px; background: #f1f5f9; border-radius: 20px; overflow: hidden;">
+                        <div style="width: ${percentage}%; height: 100%; background: linear-gradient(90deg, #6366f1 0%, #818cf8 100%); border-radius: 20px;"></div>
+                    </div>
+                    <div style="width: 60px; text-align: right; font-weight: 700; color: #6366f1;">${item.importance.toFixed(4)}</div>
+                </div>
+            `;
         });
 
         html += `
-            </table>
+            </div>
         </div>
-        
-        <div class="result-section">
-            <h4>🎲 Confusion Matrix</h4>
-            <table class="result-table confusion-matrix">
+
+        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 25px; margin-bottom: 25px;">
+             <div class="result-section" style="background: #fff; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+                <h4 style="margin-top: 0; color: #1e293b; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #fce7f3; color: #db2777; padding: 8px; border-radius: 8px;">📈</span>
+                     Class Metrics
+                </h4>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: separate; border-spacing: 0;">
+                        <thead>
+                            <tr style="background: #f8fafc;">
+                                <th style="padding: 12px; text-align: left; font-size: 12px; color: #64748b; border-bottom: 2px solid #e2e8f0;">CLASS</th>
+                                <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b; border-bottom: 2px solid #e2e8f0;">PRECISION</th>
+                                <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b; border-bottom: 2px solid #e2e8f0;">RECALL</th>
+                                <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b; border-bottom: 2px solid #e2e8f0;">F1-SCORE</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+
+        data.class_metrics.forEach(metric => {
+            html += `
                 <tr>
-                    <th></th>
-    `;
+                    <td style="padding: 12px; font-weight: 600; color: #334155; border-bottom: 1px solid #f1f5f9;">${metric.class}</td>
+                    <td style="padding: 12px; text-align: center; border-bottom: 1px solid #f1f5f9;">
+                         <span style="background: #ecfdf5; color: #059669; padding: 4px 8px; border-radius: 6px; font-size: 13px; font-weight: 600;">${(metric.precision * 100).toFixed(1)}%</span>
+                    </td>
+                    <td style="padding: 12px; text-align: center; border-bottom: 1px solid #f1f5f9;">
+                        <span style="background: #eff6ff; color: #2563eb; padding: 4px 8px; border-radius: 6px; font-size: 13px; font-weight: 600;">${(metric.recall * 100).toFixed(1)}%</span>
+                    </td>
+                    <td style="padding: 12px; text-align: center; border-bottom: 1px solid #f1f5f9;">
+                        <span style="background: #f5f3ff; color: #7c3aed; padding: 4px 8px; border-radius: 6px; font-size: 13px; font-weight: 600;">${(metric.f1_score * 100).toFixed(1)}%</span>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="result-section" style="background: #fff; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+                <h4 style="margin-top: 0; color: #1e293b; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #fff7ed; color: #ea580c; padding: 8px; border-radius: 8px;">🎲</span>
+                    Confusion Matrix
+                </h4>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: separate; border-spacing: 2px;">
+                        <tr>
+                            <td style="padding: 8px;"></td>
+        `;
 
         data.classes.forEach(cls => {
-            html += `<th>Pred ${cls}</th>`;
+            html += `<td style="padding: 8px; text-align: center; font-size: 11px; font-weight: 700; color: #64748b;">Pred ${cls}</td>`;
         });
         html += '</tr>';
 
         data.confusion_matrix.forEach((row, i) => {
-            html += `<tr><th>Actual ${data.classes[i]}</th>`;
-            row.forEach(val => {
-                html += `<td>${val}</td>`;
+            html += `<tr><td style="padding: 8px; font-size: 11px; font-weight: 700; color: #64748b; text-align: right;">True ${data.classes[i]}</td>`;
+            row.forEach((val, j) => {
+                const isDiagonal = i === j;
+                const bg = isDiagonal ? '#dcfce7' : '#f8fafc';
+                const color = isDiagonal ? '#166534' : '#64748b';
+                html += `<td style="padding: 12px; text-align: center; background: ${bg}; color: ${color}; border-radius: 6px; font-weight: 700;">${val}</td>`;
             });
             html += '</tr>';
         });
 
         html += `
-            </table>
+                    </table>
+                </div>
+            </div>
         </div>
-        
-        <div class="result-section">
-            <h4>📈 Class Metrics</h4>
-            <table class="result-table">
-                <tr>
-                    <th>Class</th>
-                    <th>Precision</th>
-                    <th>Recall</th>
-                    <th>F1-Score</th>
-                    <th>Support</th>
-                </tr>
-    `;
-
-        data.class_metrics.forEach(metric => {
-            html += `
-                <tr>
-                    <td>${metric.class}</td>
-                    <td>${metric.precision.toFixed(4)}</td>
-                    <td>${metric.recall.toFixed(4)}</td>
-                    <td>${metric.f1_score.toFixed(4)}</td>
-                    <td>${metric.support}</td>
-                </tr>
         `;
-        });
-
-        html += `
-            </table>
-        </div>
-        
-        <div class="result-section">
-            <h4>📊 Overall Metrics</h4>
-            <h5>Macro Average</h5>
-            <p><strong>Precision:</strong> ${data.macro_avg.precision.toFixed(4)}</p>
-            <p><strong>Recall:</strong> ${data.macro_avg.recall.toFixed(4)}</p>
-            <p><strong>F1-Score:</strong> ${data.macro_avg.f1_score.toFixed(4)}</p>
-            
-            <h5 style="margin-top: 15px;">Weighted Average</h5>
-            <p><strong>Precision:</strong> ${data.weighted_avg.precision.toFixed(4)}</p>
-            <p><strong>Recall:</strong> ${data.weighted_avg.recall.toFixed(4)}</p>
-            <p><strong>F1-Score:</strong> ${data.weighted_avg.f1_score.toFixed(4)}</p>
-        </div>
-    `;
 
         document.getElementById('dtResultContent').innerHTML = html;
     }
@@ -221,9 +242,10 @@
                         <input type="file" id="csvInput" accept=".csv" onchange="handleCSVUpload(event)"
                             style="display: none;">
                         <div class="upload-icon">📊</div>
-                        <p style="color: #666; margin-bottom: 5px;">Klik atau seret & lepas file CSV</p>
-                        <p style="color: #999; font-size: 14px;">Format: CSV dengan header</p>
-                        <p style="color: #999; font-size: 12px; margin-top: 10px;">Kolom terakhir akan digunakan sebagai
+                        <p style="color: #475569; margin-bottom: 5px;">Klik atau seret & lepas file CSV</p>
+                        <p style="color: #64748b; font-size: 14px;">Format: CSV dengan header</p>
+                        <p style="color: #64748b; font-size: 12px; margin-top: 10px;">Kolom terakhir akan digunakan
+                            sebagai
                             target/label</p>
                     </div>
 

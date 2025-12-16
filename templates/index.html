@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aplikasi Machine Learning - GLCM, KNN, Naive Bayes</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
+
 <body>
     <div class=" container">
         <div class="header">
             <h1>🔬 Aplikasi Machine Learning untuk Vision & Data Processing</h1>
             <p>GLCM Feature Extraction • KNN Regression • Naive Bayes Classification</p>
         </div>
-        
+
         <div class="tabs">
             <div class="tab-buttons">
                 <button class="tab-button active" onclick="switchTab('minggu1')">
@@ -25,7 +27,7 @@
                     Minggu 3 - Naive Bayes Classifier
                 </button>
             </div>
-            
+
             <!-- ==================== TAB MINGGU 1: GLCM ==================== -->
             <div id="minggu1" class="tab-content active">
                 <div class="main-content">
@@ -35,12 +37,12 @@
                             <div class="upload-area" onclick="document.getElementById('imageInput').click()">
                                 <input type="file" id="imageInput" accept="image/*" onchange="handleImageUpload(event)">
                                 <div class="upload-icon">📷</div>
-                                <pstyle="color: #666; margin-bottom: 5px;">Klik untuk memilih gambar</p>
-                                <p style="color: #999; font-size: 14px;">Format: JPEG, PNG</p>
+                                <p style="color: #475569; margin-bottom: 5px;">Klik untuk memilih gambar</p>
+                                <p style="color: #64748b; font-size: 14px;">Format: JPEG, PNG</p>
                             </div>
                             <img id="previewImage" class="preview-image" style="display: none;">
                         </div>
-                        
+
                         <div class="card" id="angleCard" style="display: none; margin-top: 20px;">
                             <h2>🎯 Pilih Sudut GLCM</h2>
                             <div class="angle-selector">
@@ -54,7 +56,7 @@
                             </button>
                         </div>
                     </div>
-                    
+
                     <div>
                         <div class="card info-card">
                             <h3>ℹ️ Tentang Fitur GLCM</h3>
@@ -65,7 +67,7 @@
                             <p><strong>ASM:</strong> Angular Second Moment - kuadrat dari energy</p>
                             <p><strong>Correlation:</strong> Mengukur korelasi linear antara pixel</p>
                         </div>
-                        
+
                         <div class="card" id="resultsCard" style="display: none; margin-top: 20px;">
                             <h2>📊 Hasil Ekstraksi Fitur</h2>
                             <div class="loading" id="loading">
@@ -76,15 +78,16 @@
                     </div>
                 </div>
             </div>
-            
+
             <!--==================== TAB MINGGU 2: KNN PREDICTION ==================== -->
             <div id="minggu2" class="tab-content">
                 <div class="knn-wrapper">
                     <div class="knn-header">
                         <h2>🌾 Prediksi Harga Beras menggunakan KNN Regression</h2>
-                        <p class="subtitle">Masukkan data Luas Panen dan Hasil Produksi untuk memprediksi harga beras</p>
+                        <p class="subtitle">Masukkan data Luas Panen dan Hasil Produksi untuk memprediksi harga beras
+                        </p>
                     </div>
-                    
+
                     <div class="knn-main-content">
                         <div class="knn-left">
                             <div class="card">
@@ -95,8 +98,8 @@
                                             <span class="label-icon">🌱</span>
                                             Luas Panen (ha)
                                         </label>
-                                        <input type="number" id="luas_panen" name="luas_panen" 
-                                               step="0.01" min="0" placeholder="Contoh: 3000" required>
+                                        <input type="number" id="luas_panen" name="luas_panen" step="0.01" min="0"
+                                            placeholder="Contoh: 3000" required>
                                         <small class="input-hint">Rentang: 1000 - 5000 ha</small>
                                     </div>
 
@@ -105,18 +108,18 @@
                                             <span class="label-icon">📦</span>
                                             Hasil Produksi (ton)
                                         </label>
-                                        <input type="number" id="hasil_produksi" name="hasil_produksi" 
-                                               step="0.01" min="0" placeholder="Contoh: 5000" required>
+                                        <input type="number" id="hasil_produksi" name="hasil_produksi" step="0.01"
+                                            min="0" placeholder="Contoh: 5000" required>
                                         <small class="input-hint">Rentang: 2000 - 8000 ton</small>
                                     </div>
 
-                                   <div class="form-group">
+                                    <div class="form-group">
                                         <label for="nilai_k">
                                             <span class="label-icon">🎯</span>
                                             Nilai K (Tetangga Terdekat)
                                         </label>
-                                        <input type="number" id="nilai_k" name="nilai_k" 
-                                               value="2" min="1" max="10" required>
+                                        <input type="number" id="nilai_k" name="nilai_k" value="2" min="1" max="10"
+                                            required>
                                         <small class="input-hint">💡 Nilai optimal dari jurnal: K = 2</small>
                                     </div>
 
@@ -145,16 +148,18 @@
                                     </button>
                                 </form>
                             </div>
-                            
+
                             <div class="card info-card" style="margin-top: 20px;">
                                 <h3>📚 Tentang KNN Regression</h3>
-                                <p><strong>K-Nearest Neighbor (KNN)</strong> adalah algoritma machine learning yang memprediksi nilai berdasarkan K tetangga terdekat.</p>
-                                <p><strong>Dataset:</strong> Menggunakan data harga beras Indonesia (Januari 2019 - Desember 2021)</p>
+                                <p><strong>K-Nearest Neighbor (KNN)</strong> adalah algoritma machine learning yang
+                                    memprediksi nilai berdasarkan K tetangga terdekat.</p>
+                                <p><strong>Dataset:</strong> Menggunakan data harga beras Indonesia (Januari 2019 -
+                                    Desember 2021)</p>
                                 <p><strong>Normalisasi:</strong> Min-Max Normalization (0-1)</p>
                                 <p><strong>Evaluasi:</strong> MAE = 55.55, RMSE = 81.64 (K=2)</p>
                             </div>
                         </div>
-                        
+
                         <div class="knn-right">
                             <div id="loadingKNN" class="loading">
                                 <div class="loading-spinner"></div>
@@ -163,7 +168,7 @@
 
                             <div id="resultKNN" class="card" style="display: none;">
                                 <h3 class="card-title">📊 Hasil Prediksi</h3>
-                                  <div id="knnResultContent"></div>
+                                <div id="knnResultContent"></div>
                             </div>
                         </div>
                     </div>
@@ -175,22 +180,26 @@
                 <div class="nb-wrapper">
                     <div class="nb-header">
                         <h2>🧠 Klasifikasi Data menggunakan Naive Bayes</h2>
-                        <p class="subtitle">Upload dataset CSV custom untuk analisis menggunakan Gaussian Naive Bayes</p>
+                        <p class="subtitle">Upload dataset CSV custom untuk analisis menggunakan Gaussian Naive Bayes
+                        </p>
                     </div>
 
                     <div class="nb-main-content">
                         <div class="nb-left">
                             <div class="card">
                                 <h3 class="card-title">📤 Upload Dataset CSV</h3>
-                                <div class="csv-upload-area" id="csvUploadArea" onclick="document.getElementById('csvInput').click()">
-                                    <input type="file" id="csvInput" accept=".csv" onchange="handleCSVUpload(event)" style="display: none;">
+                                <div class="csv-upload-area" id="csvUploadArea"
+                                    onclick="document.getElementById('csvInput').click()">
+                                    <input type="file" id="csvInput" accept=".csv" onchange="handleCSVUpload(event)"
+                                        style="display: none;">
                                     <div class="upload-icon">📊</div>
-                                    <p style="color: #666; margin-bottom: 5px;">Klik atau drag & drop file CSV</p>
-                                    <p  style="color: #999; font-size: 14px;">Format: CSV dengan header</p>
-                                    <p style="color: #999; font-size: 12px; margin-top: 10px;">Kolom terakhir akan digunakan sebagai target/label</p>
+                                    <p style="color: #475569; margin-bottom: 5px;">Klik atau drag & drop file CSV</p>
+                                    <p style="color: #64748b; font-size: 14px;">Format: CSV dengan header</p>
+                                    <p style="color: #64748b; font-size: 12px; margin-top: 10px;">Kolom terakhir akan
+                                        digunakan sebagai target/label</p>
                                 </div>
 
-                                <div id="csvInfo" class="csv-info"style="display: none; margin-top: 15px;">
+                                <div id="csvInfo" class="csv-info" style="display: none; margin-top: 15px;">
                                     <p><strong>File:</strong> <span id="csvFileName"></span></p>
                                     <p><strong>Jumlah baris:</strong> <span id="csvRows"></span></p>
                                     <p><strong>Jumlah kolom:</strong> <span id="csvCols"></span></p>
@@ -205,16 +214,20 @@
                                     <small class="input-hint">Proporsi data untuk testing (default: 30%)</small>
                                 </div>
 
-                                <button id="btnProcessNB" class="process-button nb-button" onclick="processNaiveBayes()" disabled>
+                                <button id="btnProcessNB" class="process-button nb-button" onclick="processNaiveBayes()"
+                                    disabled>
                                     🧮 Klasifikasi dengan Naive Bayes
                                 </button>
                             </div>
 
                             <div class="card info-card" style="margin-top: 20px;">
                                 <h3>📚 Tentang Naive Bayes</h3>
-                                <p><strong>Gaussian Naive Bayes</strong> adalah algoritma klasifikasi probabilistik yang cocok untuk data kontinu.</p>
-                                <p><strong>Format CSV:</strong> Header di baris pertama, kolom terakhir = target class</p>
-                                <p><strong>Data:</strong> Semua fitur harus numerik, target berupa class label (0, 1, 2, ...)</p>
+                                <p><strong>Gaussian Naive Bayes</strong> adalah algoritma klasifikasi probabilistik yang
+                                    cocok untuk data kontinu.</p>
+                                <p><strong>Format CSV:</strong> Header di baris pertama, kolom terakhir = target class
+                                </p>
+                                <p><strong>Data:</strong> Semua fitur harus numerik, target berupa class label (0, 1, 2,
+                                    ...)</p>
                                 <p><strong>Metrics:</strong> Accuracy, Precision, Recall, F1-Score</p>
                             </div>
                         </div>
@@ -240,7 +253,8 @@
             </div>
         </div>
     </div>
-    
+
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
+
 </html>
